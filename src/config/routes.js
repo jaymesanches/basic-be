@@ -14,7 +14,6 @@ module.exports = function (server) {
   Produto.register(protectedApi, '/produtos')
 
   protectedApi.route('/produtos/update/:id').put(function (req, res) {
-    console.log('req.body', req.body);
     Produto.findById(req.params.id, function (err, produto) {
       produto.codigo = req.body.codigo;
       produto.descricao = req.body.descricao;
@@ -26,10 +25,11 @@ module.exports = function (server) {
       produto.estoque = req.body.estoque;
 
       produto.save().then(produto => {
-        res.status(200).send(json('Update complete'));
-      }).catch(err => {
-        res.status(400).send("unable to update the database");
-      });
+        res.json('Produto atualizado com sucesso.');
+      })
+        .catch(err => {
+          res.status(400).send(`unable to update the database - ${err}`);
+        });
     });
   });
 
@@ -135,6 +135,23 @@ module.exports = function (server) {
         };
       }).populate('cliente');
     };
+  });
+
+  protectedApi.route('/orcamentos/findOne').post(function (req, res) {
+    let obj = req.body;
+    console.log('FINDONE', obj);
+    
+    Orcamento.findOne(obj, function (err, orcamento) {
+      if (!orcamento) {
+        console.log('ERRO', err, orcamentos);
+      } else {
+        res.json(orcamento);
+      };
+    }).populate('cliente')
+      .populate({
+        path: 'orcamentosProdutos',
+        populate: { path: 'produto' }
+      });
   });
 
   /*     
