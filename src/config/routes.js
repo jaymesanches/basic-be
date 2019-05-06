@@ -42,7 +42,9 @@ module.exports = function (server) {
       } else {
         res.json(produto)
       }
-    })
+    }).catch(err => {
+      res.status(400).send(err);
+    });
   })
 
   const Cliente = require('../api/cliente/clienteService')
@@ -57,7 +59,9 @@ module.exports = function (server) {
       } else {
         res.json(cliente)
       }
-    })
+    }).catch(err => {
+      res.status(400).send(err);
+    });
   });
 
   protectedApi.route('/clientes/update/:id').put(function (req, res) {
@@ -76,6 +80,8 @@ module.exports = function (server) {
           res.status(400).send("unable to update the database");
         });
       }
+    }).catch(err => {
+      res.status(400).send(err);
     });
   });
 
@@ -105,20 +111,19 @@ module.exports = function (server) {
       } else {
         res.json(cliente);
       }
-    }).populate('cliente');
+    }).populate('cliente').catch(err => {
+      res.status(400).send(err);
+    });
   });
 
   protectedApi.route('/orcamentos/search/:id').get(function (req, res) {
     const id = req.params.id;
-    console.log('ORC ID', id);
 
     if (id) {
       Orcamento.findOne({ _id: id }, function (err, orcamento) {
         if (!orcamento) {
           console.log('ERRO', err, orcamento);
         } else {
-          console.log('BACK', orcamento);
-
           res.json(orcamento);
         }
       }).populate('cliente')
@@ -139,13 +144,29 @@ module.exports = function (server) {
 
   protectedApi.route('/orcamentos/findOne').post(function (req, res) {
     let obj = req.body;
-    console.log('FINDONE', obj);
-    
     Orcamento.findOne(obj, function (err, orcamento) {
       if (!orcamento) {
-        console.log('ERRO', err, orcamentos);
+        console.log('ERRO', err, orcamento);
       } else {
         res.json(orcamento);
+      };
+    }).populate('cliente')
+      .populate({
+        path: 'orcamentosProdutos',
+        populate: { path: 'produto' }
+      });
+  });
+
+  protectedApi.route('/orcamentos/filter').post(function (req, res) {
+    const obj = req.body;
+    console.log(obj);
+    
+    Orcamento.find(obj, function (err, orcamentos) {
+      if (!orcamentos) {
+        console.log('ERRO', err, orcamentos);
+        res.send(err);
+      } else {
+        res.json(orcamentos);
       };
     }).populate('cliente')
       .populate({

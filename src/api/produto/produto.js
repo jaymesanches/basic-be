@@ -16,6 +16,8 @@ const produtoSchema = new mongoose.Schema({
     m: Number,
     g: Number,
     gg: Number,
+    xg: Number,
+    xxg: Number,
   }
 })
 module.exports = restful.model('Produto', produtoSchema)
