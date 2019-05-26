@@ -5,6 +5,7 @@
   "main": "src/loader.js",
   "scripts": {
     "dev": "nodemon",
+    "debug": "nodemon --inspect",
     "production": "pm2 start src/loader.js --name --my-money-backend"
   },
   "keywords": [],

@@ -1,187 +1,39 @@
-const express = require('express')
-const auth = require('./auth')
+const express = require('express');
+const auth = require('./auth');
+const produtoRoutes = require('./produto-routes');
+const clienteRoutes = require('./cliente-routes');
+const orcamentoRoutes = require('./orcamento-routes');
 
-module.exports = function (server) {
+const server = function (server) {
 
   /*      
    * Rotas protegidas por Token JWT    
    */
-  const protectedApi = express.Router()
-  server.use('/api', protectedApi)
-  //protectedApi.use(auth)
+  const protectedApi = express.Router();
+  server.use('/api', protectedApi);
+  //protectedApi.use(auth);
 
-  const Produto = require('../api/produto/produtoService')
-  Produto.register(protectedApi, '/produtos')
+  const Produto = require('../api/produto/produtoService');
+  Produto.register(protectedApi, '/produtos');
+  protectedApi.use('/produtos', produtoRoutes);
+  
+  const Cliente = require('../api/cliente/clienteService');
+  Cliente.register(protectedApi, '/clientes');
+  protectedApi.use('/clientes', clienteRoutes);
 
-  protectedApi.route('/produtos/update/:id').put(function (req, res) {
-    Produto.findById(req.params.id, function (err, produto) {
-      produto.codigo = req.body.codigo;
-      produto.descricao = req.body.descricao;
-      produto.tamanho = req.body.tamanho;
-      produto.categoria = req.body.categoria;
-      produto.peso = req.body.peso;
-      produto.cor = req.body.cor;
-      produto.valor = req.body.valor;
-      produto.estoque = req.body.estoque;
-
-      produto.save().then(produto => {
-        res.json('Produto atualizado com sucesso.');
-      })
-        .catch(err => {
-          res.status(400).send(`unable to update the database - ${err}`);
-        });
-    });
-  });
-
-  protectedApi.route('/produtos/search').get(function (req, res) {
-    const regex = new RegExp(req.query.descricao, "i")
-      , query = { descricao: regex };
-    Produto.find(query, function (err, produto) {
-      if (!produto) {
-        console.log('ERRO', err, produto)
-      } else {
-        res.json(produto)
-      }
-    }).catch(err => {
-      res.status(400).send(err);
-    });
-  })
-
-  const Cliente = require('../api/cliente/clienteService')
-  Cliente.register(protectedApi, '/clientes')
-
-  protectedApi.route('/clientes/search').get(function (req, res) {
-    const regex = new RegExp(req.query.nome, "i")
-      , query = { nome: regex };
-    Cliente.find(query, function (err, cliente) {
-      if (!cliente) {
-        console.log('ERRO', err, cliente)
-      } else {
-        res.json(cliente)
-      }
-    }).catch(err => {
-      res.status(400).send(err);
-    });
-  });
-
-  protectedApi.route('/clientes/update/:id').put(function (req, res) {
-    Cliente.findById(req.params.id, function (err, cliente) {
-      if (!cliente)
-        console.log('ERRO', err, cliente)
-      else {
-        cliente.codigo = req.body.codigo;
-        cliente.nome = req.body.nome;
-        cliente.email = req.body.email;
-        cliente.cnpj = req.body.cnpj;
-
-        cliente.save().then(cliente => {
-          res.json('Update complete');
-        }).catch(err => {
-          res.status(400).send("unable to update the database");
-        });
-      }
-    }).catch(err => {
-      res.status(400).send(err);
-    });
-  });
-
-  const Orcamento = require('../api/orcamento/orcamentoService')
-  const OrcamentoProduto = require('../api/orcamento/orcamentoProdutoService')
-  Orcamento.register(protectedApi, '/orcamentos')
-
-  protectedApi.route('/orcamentos/salvar').post(function (req, res) {
-    OrcamentoProduto.insertMany(req.body.orcamentosProdutos)
-      .then(itens => {
-        const ids = itens.map(o => o._id);
-        const data = Object.assign({}, req.body, { orcamentosProdutos: ids });
-        const orcamento = new Orcamento(data);
-
-        orcamento.save().then(() => {
-          res.json('Orçamento incluído com sucesso.');
-        }).catch(err => {
-          res.status(400).send("Erro ao salvar o orçamento.");
-        });
-      })
-  });
-
-  protectedApi.route('/orcamentos/list').get(function (req, res) {
-    Orcamento.find(function (err, cliente) {
-      if (!cliente) {
-        console.log('ERRO', err, cliente);
-      } else {
-        res.json(cliente);
-      }
-    }).populate('cliente').catch(err => {
-      res.status(400).send(err);
-    });
-  });
-
-  protectedApi.route('/orcamentos/search/:id').get(function (req, res) {
-    const id = req.params.id;
-
-    if (id) {
-      Orcamento.findOne({ _id: id }, function (err, orcamento) {
-        if (!orcamento) {
-          console.log('ERRO', err, orcamento);
-        } else {
-          res.json(orcamento);
-        }
-      }).populate('cliente')
-        .populate({
-          path: 'orcamentosProdutos',
-          populate: { path: 'produto' }
-        });
-    } else {
-      Orcamento.find(function (err, orcamentos) {
-        if (!orcamentos) {
-          console.log('ERRO', err, orcamentos);
-        } else {
-          res.json(orcamentos);
-        };
-      }).populate('cliente');
-    };
-  });
-
-  protectedApi.route('/orcamentos/findOne').post(function (req, res) {
-    let obj = req.body;
-    Orcamento.findOne(obj, function (err, orcamento) {
-      if (!orcamento) {
-        console.log('ERRO', err, orcamento);
-      } else {
-        res.json(orcamento);
-      };
-    }).populate('cliente')
-      .populate({
-        path: 'orcamentosProdutos',
-        populate: { path: 'produto' }
-      });
-  });
-
-  protectedApi.route('/orcamentos/filter').post(function (req, res) {
-    const obj = req.body;
-    console.log(obj);
-    
-    Orcamento.find(obj, function (err, orcamentos) {
-      if (!orcamentos) {
-        console.log('ERRO', err, orcamentos);
-        res.send(err);
-      } else {
-        res.json(orcamentos);
-      };
-    }).populate('cliente')
-      .populate({
-        path: 'orcamentosProdutos',
-        populate: { path: 'produto' }
-      });
-  });
+  const Orcamento = require('../api/orcamento/orcamentoService');
+  Orcamento.register(protectedApi, '/orcamentos');
+  protectedApi.use('/orcamentos', orcamentoRoutes);
 
   /*     
    * Rotas abertas     
    */
-  const openApi = express.Router()
-  server.use('/oapi', openApi)
-  const AuthService = require('../api/user/authService')
-  openApi.post('/login', AuthService.login)
-  openApi.post('/signup', AuthService.signup)
-  openApi.post('/validateToken', AuthService.validateToken)
+  const openApi = express.Router();
+  server.use('/oapi', openApi);
+  const AuthService = require('../api/user/authService');
+  openApi.post('/login', AuthService.login);
+  openApi.post('/signup', AuthService.signup);
+  openApi.post('/validateToken', AuthService.validateToken);
 }
+
+module.exports = server;
