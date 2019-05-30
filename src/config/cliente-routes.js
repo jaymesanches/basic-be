@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Cliente = require('../api/cliente/clienteService');
+const Cliente = require('../api/cliente/cliente-service');
 
 router.route('/search').get(function (req, res) {
   const regex = new RegExp('.*' + req.query.nome + '.*', "i")

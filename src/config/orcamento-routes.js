@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Orcamento = require('../api/orcamento/orcamentoService');
+const Orcamento = require('../api/orcamento/orcamento-service');
 
 router.route('/salvar').post(function (req, res) {
   const data = Object.assign({}, req.body, { orcamentosProdutos: req.body.orcamentosProdutos });
@@ -43,8 +43,6 @@ router.route('/search/:id').get(function (req, res) {
 
   if (id) {
     Orcamento.findOne({ _id: id }, function (err, orcamento) {
-      console.log('-->ORC', orcamento);
-
       if (!orcamento) {
         console.log('ERRO', err, orcamento);
       } else {
@@ -64,6 +62,14 @@ router.route('/search/:id').get(function (req, res) {
 
 router.route('/filter').post(function (req, res) {
   const obj = req.body;
+  let situacao = req.body.situacao;
+
+  if (situacao === 'TODAS' || !situacao) {
+    delete obj.situacao;
+  } else if (situacao === 'EXPIRADO') {
+    obj.situacao = 'ABERTO';
+    obj = [...obj, { situacao: 'ABERTO', dtaValidade: { $gt: new Date() } }];
+  }
 
   Orcamento.find(obj, function (err, orcamentos) {
     if (!orcamentos) {

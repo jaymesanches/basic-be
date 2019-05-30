@@ -13,15 +13,15 @@ const server = function (server) {
   server.use('/api', protectedApi);
   //protectedApi.use(auth);
 
-  const Produto = require('../api/produto/produtoService');
+  const Produto = require('../api/produto/produto-service');
   Produto.register(protectedApi, '/produtos');
   protectedApi.use('/produtos', produtoRoutes);
   
-  const Cliente = require('../api/cliente/clienteService');
+  const Cliente = require('../api/cliente/cliente-service');
   Cliente.register(protectedApi, '/clientes');
   protectedApi.use('/clientes', clienteRoutes);
 
-  const Orcamento = require('../api/orcamento/orcamentoService');
+  const Orcamento = require('../api/orcamento/orcamento-service');
   Orcamento.register(protectedApi, '/orcamentos');
   protectedApi.use('/orcamentos', orcamentoRoutes);
 

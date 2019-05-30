@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Produto = require('../api/produto/produtoService');
+const Produto = require('../api/produto/produto-service');
 
 router.route('/update/:id').put(function (req, res) {
   Produto.findById(req.params.id, function (err, produto) {
@@ -16,9 +16,50 @@ router.route('/update/:id').put(function (req, res) {
     produto.save().then(produto => {
       res.json('Produto atualizado com sucesso.');
     }).catch(err => {
-      res.status(400).send(`unable to update the database - ${err}`);
+      res.status(400).send(`Erro ao atualizar o produto - ${err}`);
     });
   });
+});
+
+router.route('/baixar-estoque').post(function (req, res) {
+  const produtos = req.body.orcamentosProdutos;
+  const opts = { runValidators: true, new: true };
+  
+  produtos.forEach(op => {
+    const where = { _id: op.produto };
+
+    Produto.findOne(where, (err, produto) => {
+      if(err){
+        res.status(500).json({'error': 'Erro ao baixar estoque'});
+      } else {
+        const update = { $inc: { ['estoque.'  + op.tamanho] : -op.quantidade } };
+
+        if (produto.estoque[op.tamanho] - op.quantidade < 0) {
+          res.status(200).json({ 'error': 'Estoque insuficiente' });
+        } else {
+          Produto.updateOne(where, update, opts, (err, result) => {
+            if(err){
+              res.status(500).json({'error': 'Erro ao baixar estoque'});
+            }
+          });
+        }
+      }
+    });
+  });
+});
+
+router.route('/update-all').post(function (req, res){
+  const produtos = req.body;
+
+  produtos.forEach(produto =>{
+    Produto.findOneAndUpdate({_id: produto._id}, produto, (err, result) => {
+      if(err){
+        res.status(500).json({'error': 'Erro ao atualizar produto'});
+      }
+    });
+  });
+
+  res.json({'success': 'Produtos atualizados com sucesso.'});
 });
 
 router.route('/search').get(function (req, res) {
