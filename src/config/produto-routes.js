@@ -48,6 +48,19 @@ router.route('/baixar-estoque').post(function (req, res) {
   });
 });
 
+router.route('/subir-estoque').post(function (req, res) {
+  const op = req.body;
+  const where = { _id: op.produto._id };
+  const update = { $inc: {['estoque.'  + op.tamanho.toLowerCase()] : op.quantidade }} ;
+  const opts = { runValidators: true, new: true };
+
+  Produto.findOneAndUpdate(where, update, opts, (err, result) => {
+    if(err){
+      res.status(500).json({'error': 'Erro ao atualizar produto'});
+    }
+  });
+});
+
 router.route('/update-all').post(function (req, res){
   const produtos = req.body;
 
