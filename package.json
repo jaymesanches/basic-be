@@ -14,7 +14,7 @@
   "dependencies": {
     "bcrypt": "^5.0.0",
     "body-parser": "^1.18.3",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "express-query-int": "^3.0.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
